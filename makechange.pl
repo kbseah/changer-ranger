@@ -339,8 +339,7 @@ sub report_currencies {
 ## DATA ########################################################################
 
 # Data from Wikipedia, from the currently-circulating or most recent version
-# of the coinage. LSD refers to pre-decimal British coinage; value for 1 p is
-# a placeholder (need to replace with correct value). For USD coins, the
+# of the coinage. LSD refers to pre-decimal British coinage. For USD coins, the
 # limited-circulation 1 dollar and 50 cent coins are not included.
 # Data columns: Currency code, value, weight in grams
 __DATA__
@@ -358,7 +357,7 @@ LSD,24,11.31
 LSD,12,5.66
 LSD,6,2.83
 LSD,3,6.8
-LSD,1,5.67
+LSD,1,9.6
 LSD,0.5,5.67
 LSD,0.25,2.83
 LSD_part,60,28.28
@@ -367,7 +366,7 @@ LSD_part,24,11.31
 LSD_part,12,5.66
 LSD_part,6,2.83
 LSD_part,3,6.8
-LSD_part,1,5.67
+LSD_part,1,9.6
 USD,25,5.67
 USD,10,2.268
 USD,5,5
