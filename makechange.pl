@@ -26,6 +26,7 @@ change, the average number of coins needed, and the best combination possible.
 
 use Getopt::Long;
 use Pod::Usage;
+use Data::Dumper;
 
 my $curr= 'USD';
 my $verbose = 0; # If defined, verbosely explain what the numbers reported mean
@@ -41,6 +42,25 @@ my %denom_hash = ('USD' => [25, 10, 5, 1],
                   'LSD' => [240, 12, 1],
                   );
 
+my %denom_weights = ('USD' => ('25' => 1,
+                               '10' => 1,
+                               '5' => 1,
+                               '1' => 1),
+                     'EUR' => ('50' => 1,
+                               '20' => 1,
+                               '10' => 1,
+                               '5' => 1,
+                               '2' => 1,
+                               '1' => 1),
+                     'SGD' => ('50' => 1,
+                               '20' => 1,
+                               '10' => 1,
+                               '5' => 1),
+                     'LSD' => ('240' => 1,
+                               '12' => 1,
+                               '1' => 1),
+                     );
+
 pod2usage("No arguments given") if !@ARGV;
 
 GetOptions ("curr|c=s" => \$curr,
@@ -49,6 +69,7 @@ GetOptions ("curr|c=s" => \$curr,
             "max=i" => \$max,
             "min=i" => \$min,
             "verbose!" => \$verbose,
+            "bestweight" => \$byweight,
             "help|h" => sub {pod2usage(-verbose=>1)},
             "man|h" => sub {pod2usage(-verbose=>2)},
             ) or pod2usage(-verbose=>1);
@@ -67,10 +88,10 @@ Default: USD
 =item --denom|-d I<INTEGER>,I<INTEGER>,...
 
 Specify a custom denomination, instead of using one of the pre-defined currencies.
-This should be a comma-separated list of integers.
+This should be a comma-separated list of integers, without repeats, at least
+including the number 1.
 
 Default: No.
-
 
 =item --amount|-a I<INTEGER>
 
@@ -119,8 +140,6 @@ if (defined $denom_str) {
     say STDERR "Using denominations from currency $curr with values: ".join(" ", @denom_arr);
 }
 
-
-
 unless ($verbose == 1) {
     # Header for table if verbose option not chosen
     say join "\t", qw(Amt Comb Avg Best);
@@ -142,13 +161,31 @@ for (my $amt=$max; $amt >= $min; $amt-=1) {
         say "For amount $amt:";
         say "There are $ways ways to make change, using on average ".sprintf("%.1f",$mean_numbers)." coins";
         say "The best combination uses $bestchange_size coins and is: ".join(" ", @$bestchange_aref);
+        say '(Note: There may be more than one answer)';
     } else {
         say join "\t", ($amt, $ways, sprintf("%.1f",$mean_numbers), $bestchange_size);
     }
-
 }
 
 ## SUBS ########################################################################
+
+sub smallestsum_array {
+    my $AoAref = shift @_;
+    my $lowest;
+    my @winner;
+    foreach my $aref (@$AoAref) {
+        if (!defined $lowest) {
+            $lowest = sum_array($aref);
+            @winner = @$aref;
+        } else {
+            if (sum_array($aref) < $lowest) {
+                $lowest = sum_array ($aref);
+                @winner = @$aref;
+            }
+        }
+    }
+    return (\@winner);
+}
 
 sub shortestarray {
     my $AoAref = shift @_;
@@ -166,6 +203,15 @@ sub shortestarray {
         }
     }
     return (\@winner);
+}
+
+sub sum_array {
+    my $aref = shift @_;
+    my $total = 0;
+    foreach my $val (@$aref) {
+        $total += $val;
+    }
+    return $total;
 }
 
 sub mean {
