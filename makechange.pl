@@ -37,30 +37,14 @@ my @denom_arr;
 my $byweight;
 
 # Predefined denominations
-my %denom_hash = ('USD' => [25, 10, 5, 1],
-                  'EUR' => [50, 20, 10, 5, 2, 1],
-                  'SGD' => [50, 20, 10, 5],
-                  'LSD' => [240, 12, 1],
-                  );
-
-my %denom_weights = ('USD' => {'25' => 1,
-                               '10' => 1,
-                               '5' => 1,
-                               '1' => 1},
-                     'EUR' => {'50' => 1,
-                               '20' => 1,
-                               '10' => 1,
-                               '5' => 1,
-                               '2' => 1,
-                               '1' => 1},
-                     'SGD' => {'50' => 1,
-                               '20' => 1,
-                               '10' => 1,
-                               '5' => 1},
-                     'LSD' => {'240' => 1,
-                               '12' => 1,
-                               '1' => 1},
-                     );
+# Read in data from DATA block
+my %denom_hash;
+my %denom_weights;
+foreach my $line (<DATA>){
+    my ($curr,$val,$wt) = split /,/, $line;
+    push @{$denom_hash{$curr}}, $val;
+    $denom_weights{$curr}{$val} = $wt;
+}
 
 pod2usage("No arguments given") if !@ARGV;
 
@@ -304,3 +288,58 @@ sub makechange {
     }
     return $ways;
 }
+
+
+# Data from Wikipedia, from the currently-circulating or most recent version
+# of the coinage. LSD refers to pre-decimal British coinage; value for 1 p is
+# a placeholder (need to replace with correct value). For USD coins, the
+# limited-circulation 1 dollar and 50 cent coins are not included.
+# Data columns: Currency code, value, weight in grams
+__DATA__
+GBP,200,12
+GBP,100,8.75
+GBP,50,8
+GBP,20,5
+GBP,10,6.5
+GBP,5,3.25
+GBP,2,7.12
+GBP,1,3.56
+LSD,60,28.28
+LSD,30,14.14
+LSD,24,11.31
+LSD,12,5.66
+LSD,6,2.83
+LSD,3,6.8
+LSD,1,5.67
+LSD,0.5,5.67
+LSD,0.25,2.83
+USD,25,5.67
+USD,10,2.268
+USD,5,5
+USD,1,2.5
+EUR,200,0.5,
+EUR,100,7.5,
+EUR,50,7.8
+EUR,20,5.74
+EUR,10,4.10
+EUR,5,3.92
+EUR,2,3.06
+EUR,1,2.3
+SGD,100,7.62
+SGD,50,6.56
+SGD,20,3.85
+SGD,10,2.36
+SGD,5,1.70
+JPY,500,7
+JPY,100,4.8
+JPY,50,4
+JPY,10,4.5
+JPY,5,3.75
+JPY,1,1
+CHF,500,13.2
+CHF,200,8.8
+CHF,100,4.4
+CHF,50,2.2
+CHF,20,4
+CHF,10,3
+CHF,5,1.8
