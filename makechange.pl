@@ -34,6 +34,7 @@ my $amount = 100;
 my ($max, $min) = (undef, undef);
 my $denom_str = undef;
 my @denom_arr;
+my $byweight;
 
 # Predefined denominations
 my %denom_hash = ('USD' => [25, 10, 5, 1],
@@ -42,23 +43,23 @@ my %denom_hash = ('USD' => [25, 10, 5, 1],
                   'LSD' => [240, 12, 1],
                   );
 
-my %denom_weights = ('USD' => ('25' => 1,
+my %denom_weights = ('USD' => {'25' => 1,
                                '10' => 1,
                                '5' => 1,
-                               '1' => 1),
-                     'EUR' => ('50' => 1,
+                               '1' => 1},
+                     'EUR' => {'50' => 1,
                                '20' => 1,
                                '10' => 1,
                                '5' => 1,
                                '2' => 1,
-                               '1' => 1),
-                     'SGD' => ('50' => 1,
+                               '1' => 1},
+                     'SGD' => {'50' => 1,
                                '20' => 1,
                                '10' => 1,
-                               '5' => 1),
-                     'LSD' => ('240' => 1,
+                               '5' => 1},
+                     'LSD' => {'240' => 1,
                                '12' => 1,
-                               '1' => 1),
+                               '1' => 1},
                      );
 
 pod2usage("No arguments given") if !@ARGV;
@@ -114,6 +115,13 @@ Verbosely report the results.
 
 Default: No.
 
+=item --bestweight
+
+Also do a calculation for lightest combination of coins, using weights for
+predefined currencies.
+
+Default: No.
+
 =item --help
 
 Short help message
@@ -142,7 +150,9 @@ if (defined $denom_str) {
 
 unless ($verbose == 1) {
     # Header for table if verbose option not chosen
-    say join "\t", qw(Amt Comb Avg Best);
+    my @outheader =qw(Amt Comb Avg Best);
+    push @outheader, qw(Bestweight Lightest_comb) if defined $byweight;
+    say join "\t", @outheader;
 }
 
 if (!defined $max || !defined $min) {
@@ -157,34 +167,48 @@ for (my $amt=$max; $amt >= $min; $amt-=1) {
     my $mean_numbers = mean(\@numbers);
     my $bestchange_aref = shortestarray($changecombinations_aref);
     my $bestchange_size = scalar @$bestchange_aref;
+    my ($bestweight, $bestweight_coins_aref);
+    if (defined $byweight) {
+        ($bestweight, $bestweight_coins_aref) = weigh_coins ($changecombinations_aref, $denom_weights{$curr});
+    }
     if ($verbose == 1) {
         say "For amount $amt:";
         say "There are $ways ways to make change, using on average ".sprintf("%.1f",$mean_numbers)." coins";
         say "The best combination uses $bestchange_size coins and is: ".join(" ", @$bestchange_aref);
-        say '(Note: There may be more than one answer)';
+        say "\t(Note: There may be more than one answer for fewest coins)";
+        if (defined $byweight) {
+            say "The lightest combination has weight $bestweight and is: ".join(" ", @$bestweight_coins_aref);
+            say "\t(Note: There may be more than one answer for lightest combination)";
+        }
     } else {
-        say join "\t", ($amt, $ways, sprintf("%.1f",$mean_numbers), $bestchange_size);
+        my @outarr = ($amt, $ways, sprintf("%.1f",$mean_numbers), $bestchange_size);
+        if (defined $byweight) {
+            push @outarr, ($bestweight, join(",", @$bestweight_coins_aref));
+        }
+        say join "\t", @outarr;
     }
 }
 
 ## SUBS ########################################################################
 
-sub smallestsum_array {
-    my $AoAref = shift @_;
+sub weigh_coins {
+    my ($aref,
+        $weights_href,
+        ) = @_;
+    my %hash;
     my $lowest;
     my @winner;
-    foreach my $aref (@$AoAref) {
-        if (!defined $lowest) {
-            $lowest = sum_array($aref);
-            @winner = @$aref;
-        } else {
-            if (sum_array($aref) < $lowest) {
-                $lowest = sum_array ($aref);
-                @winner = @$aref;
-            }
+    foreach my $cointypes_aref (@$aref) {
+        my @coinweights = map { $weights_href->{$_} } @$cointypes_aref;
+        my $totalweight = sum_array(\@coinweights);
+        #$hash{join ",", @$cointypes_aref} = $totalweight;
+        if (!defined $lowest || $totalweight < $lowest) {
+            $lowest = $totalweight;
+            @winner = @$cointypes_aref;
         }
     }
-    return (\@winner);
+    return ($lowest, \@winner);
+    #return \%hash;
 }
 
 sub shortestarray {
