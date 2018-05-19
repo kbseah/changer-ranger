@@ -55,6 +55,7 @@ GetOptions ("curr|c=s" => \$curr,
             "min=i" => \$min,
             "verbose!" => \$verbose,
             "bestweight" => \$byweight,
+            "report-currencies" => \&report_currencies,
             "help|h" => sub {pod2usage(-verbose=>1)},
             "man|h" => sub {pod2usage(-verbose=>2)},
             ) or pod2usage(-verbose=>1);
@@ -65,8 +66,8 @@ GetOptions ("curr|c=s" => \$curr,
 
 =item --curr|-c I<STRING>
 
-Specify a pre-defined currency. Possible values: USD, EUR, SGD, LSD (pre-decimal
-British coinage).
+Specify a pre-defined currency. To see a list of possible values, use option
+I<--report-currencies>.
 
 Default: USD
 
@@ -102,9 +103,14 @@ Default: No.
 =item --bestweight
 
 Also do a calculation for lightest combination of coins, using weights for
-predefined currencies.
+predefined currencies. Also calculates the weight of the fewest-count combination
+of coins as a comparison.
 
 Default: No.
+
+=item --report-currencies
+
+Report a table of the currencies available in the table.
 
 =item --help
 
@@ -134,8 +140,8 @@ if (defined $denom_str) {
 
 unless ($verbose == 1) {
     # Header for table if verbose option not chosen
-    my @outheader =qw(Amt Comb Avg Best);
-    push @outheader, qw(Bestweight Lightest_comb) if defined $byweight;
+    my @outheader =qw(Amt Comb Avg Bestcount_count);
+    push @outheader, qw(Bestcount_wt Bestwt Bestwt_count) if defined $byweight;
     say join "\t", @outheader;
 }
 
@@ -149,25 +155,49 @@ for (my $amt=$max; $amt >= $min; $amt-=1) {
     my $ways = scalar @$changecombinations_aref;
     my @numbers = map { scalar @$_ } @$changecombinations_aref;
     my $mean_numbers = mean(\@numbers);
-    my $bestchange_aref = shortestarray($changecombinations_aref);
-    my $bestchange_size = scalar @$bestchange_aref;
+    my ($bestchange_size, $bestchange_aref) = shortestarrays($changecombinations_aref);
+    #my $bestchange_size = scalar @$bestchange_aref[0];
     my ($bestweight, $bestweight_coins_aref);
+    my ($bestcount_wt, $bestcount_wts_aref);
     if (defined $byweight) {
+        # Find the combination with lowest weight
         ($bestweight, $bestweight_coins_aref) = weigh_coins ($changecombinations_aref, $denom_weights{$curr});
+        # Also get the weight of combination with lowest count
+        ($bestcount_wt, $bestcount_wts_aref) = weigh_coins ($bestchange_aref, $denom_weights{$curr});
     }
     if ($verbose == 1) {
         say "For amount $amt:";
         say "There are $ways ways to make change, using on average ".sprintf("%.1f",$mean_numbers)." coins";
-        say "The best combination uses $bestchange_size coins and is: ".join(" ", @$bestchange_aref);
-        say "\t(Note: There may be more than one answer for fewest coins)";
+        say "The best combination(s) uses $bestchange_size coins and is: ";
+        foreach my $aref (@$bestchange_aref) {
+            say "\t".join(" ", @$aref);
+        }
         if (defined $byweight) {
-            say "The lightest combination has weight $bestweight and is: ".join(" ", @$bestweight_coins_aref);
-            say "\t(Note: There may be more than one answer for lightest combination)";
+            say "The lightest combination thereof has weight $bestcount_wt";
+            foreach my $aref (@$bestcount_wts_aref) {
+                say "\t". join (" ", @$aref);
+            }
+            say "The lightest combination(s) has weight $bestweight and is: ";
+            foreach my $aref (@$bestweight_coins_aref) {
+                say "\t". join (" ", @$aref);
+            }
         }
     } else {
-        my @outarr = ($amt, $ways, sprintf("%.1f",$mean_numbers), $bestchange_size);
+        my @outarr = ($amt,                          # Input amount
+                      $ways,                         # Number of ways to make change
+                      sprintf("%.1f",$mean_numbers), # Average number of coins
+                      $bestchange_size               # Smallest number of coins
+                      );
         if (defined $byweight) {
-            push @outarr, ($bestweight, join(",", @$bestweight_coins_aref));
+            # If we also find the lightest combination of coins, there may
+            # be more than one combination using different coins, so we find
+            # what is the fewest.
+            my @bestweight_coins_counts = map { scalar @$_ } @$bestweight_coins_aref;
+            my @bestweight_coins_counts_sorted = sort { $a <=> $b } @bestweight_coins_counts;
+            push @outarr, ($bestcount_wt,                      # Weight of the fewest-count combination
+                           $bestweight,                        # Weight of lightest possible combination
+                           $bestweight_coins_counts_sorted[0], # Fewest number of possible coins with this weight.
+                           );
         }
         say join "\t", @outarr;
     }
@@ -181,36 +211,44 @@ sub weigh_coins {
         ) = @_;
     my %hash;
     my $lowest;
-    my @winner;
+    my @winners;
     foreach my $cointypes_aref (@$aref) {
         my @coinweights = map { $weights_href->{$_} } @$cointypes_aref;
         my $totalweight = sum_array(\@coinweights);
         #$hash{join ",", @$cointypes_aref} = $totalweight;
         if (!defined $lowest || $totalweight < $lowest) {
             $lowest = $totalweight;
-            @winner = @$cointypes_aref;
+            @winners = ($cointypes_aref);
+        } elsif ($totalweight == $lowest) {
+            # If there is a tie
+            push @winners, $cointypes_aref;
         }
     }
-    return ($lowest, \@winner);
+    return ($lowest, \@winners);
     #return \%hash;
 }
 
-sub shortestarray {
+sub shortestarrays {
     my $AoAref = shift @_;
     my $lowest;
-    my @winner;
+    my @winners;
     foreach my $aref (@$AoAref) {
         if (!defined $lowest) {
+            # initialize
             $lowest = scalar @$aref;
-            @winner = @$aref;
+            @winners = ($aref);
         } else {
             if (scalar @$aref < $lowest) {
+                # If find a new lower value, reset results array
                 $lowest = scalar @$aref;
-                @winner = @$aref;
+                @winners = ($aref);
+            } elsif (scalar @$aref == $lowest) {
+                # If there is a tie, add to list
+                push @winners, $aref;
             }
         }
     }
-    return (\@winner);
+    return ($lowest, \@winners);
 }
 
 sub sum_array {
@@ -289,6 +327,14 @@ sub makechange {
     return $ways;
 }
 
+sub report_currencies {
+    foreach my $curr (sort keys %denom_hash) {
+        say STDERR join "\t", ($curr, join (",", @{$denom_hash{$curr}}));
+    }
+    exit;
+}
+
+## DATA ########################################################################
 
 # Data from Wikipedia, from the currently-circulating or most recent version
 # of the coinage. LSD refers to pre-decimal British coinage; value for 1 p is
