@@ -140,8 +140,8 @@ if (defined $denom_str) {
 
 unless ($verbose == 1) {
     # Header for table if verbose option not chosen
-    my @outheader =qw(Amt Comb Avg Bestcount_count);
-    push @outheader, qw(Bestcount_wt Bestwt Bestwt_count) if defined $byweight;
+    my @outheader = qw(Amt Comb Avg Bestcount_count Bestcount_number);
+    push @outheader, qw(Bestcount_wt Bestwt Bestwt_count Bestwt_number) if defined $byweight;
     say join "\t", @outheader;
 }
 
@@ -186,7 +186,8 @@ for (my $amt=$max; $amt >= $min; $amt-=1) {
         my @outarr = ($amt,                          # Input amount
                       $ways,                         # Number of ways to make change
                       sprintf("%.1f",$mean_numbers), # Average number of coins
-                      $bestchange_size               # Smallest number of coins
+                      $bestchange_size,              # Smallest number of coins
+                      scalar (@$bestchange_aref),    # How many combinations with this number
                       );
         if (defined $byweight) {
             # If we also find the lightest combination of coins, there may
@@ -197,6 +198,7 @@ for (my $amt=$max; $amt >= $min; $amt-=1) {
             push @outarr, ($bestcount_wt,                      # Weight of the fewest-count combination
                            $bestweight,                        # Weight of lightest possible combination
                            $bestweight_coins_counts_sorted[0], # Fewest number of possible coins with this weight.
+                           scalar (@$bestweight_coins_aref),   # How many combinations with the same weight
                            );
         }
         say join "\t", @outarr;
@@ -359,6 +361,13 @@ LSD,3,6.8
 LSD,1,5.67
 LSD,0.5,5.67
 LSD,0.25,2.83
+LSD_part,60,28.28
+LSD_part,30,14.14
+LSD_part,24,11.31
+LSD_part,12,5.66
+LSD_part,6,2.83
+LSD_part,3,6.8
+LSD_part,1,5.67
 USD,25,5.67
 USD,10,2.268
 USD,5,5
