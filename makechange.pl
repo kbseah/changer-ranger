@@ -133,6 +133,7 @@ if (!defined $denom_hash{$curr}) {
 if (defined $denom_str) {
     @denom_arr = split ",", $denom_str;
     say STDERR "Using custom denomination with values: ".join (" ", @denom_arr);
+    $byweight = undef;
 } else {
     @denom_arr = @{$denom_hash{$curr}};
     say STDERR "Using denominations from currency $curr with values: ".join(" ", @denom_arr);
