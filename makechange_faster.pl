@@ -85,7 +85,7 @@ Manual page
 
 =cut
 
-@denom = split /,/, $denom_str if (defined $denom_str);
+@denom = sort {$a <=> $b} split(/,/, $denom_str) if (defined $denom_str); # Sort ascending for faster search
 
 say STDERR "Finding optimal change by bounded search for denominations: ".join(" ", @denom);
 
