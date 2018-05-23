@@ -1,4 +1,6 @@
-## changer-ranger
+---
+title: changer-ranger
+---
 
 Fun with the change-making problem.
 
