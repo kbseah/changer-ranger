@@ -1,1 +1,4 @@
-theme: jekyll-theme-minimal
+title: changer-ranger
+description: Fun with the change-making problem
+theme: jekyll-theme-leap-day
+show_downloads: false

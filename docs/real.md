@@ -2,6 +2,8 @@
 title: Real-life currencies
 ---
 
+# Real-life currencies
+
 How well do real-life currencies perform in making change?
 
 ## The currencies
