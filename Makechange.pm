@@ -1,5 +1,5 @@
 use strict;
-use diagnostics;
+
 package Makechange;
 use Exporter qw(import);
 
@@ -128,8 +128,11 @@ sub makechange_greedy_internal {
     my @denom = @$denom_aref;
     unless ($amt == 0) {
         my $new_amt = $amt - $denom_aref->[0];
-        if ($new_amt < 0) {
-            # Overshoot: backtrack
+        if (scalar @$denom_aref == 0) {
+            # No more coins left! Return null result
+            @$accum_aref = ();
+        } elsif ($new_amt < 0) {
+            # Overshoot: backtrack and try smaller coin
             shift @denom;
             makechange_greedy_internal($amt,
                                        \@denom,
