@@ -1,6 +1,5 @@
 ---
-layout: page
-title: changer-ranger
+layout: home
 ---
 
 Fun with the change-making problem.
