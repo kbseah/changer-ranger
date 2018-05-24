@@ -2,6 +2,8 @@
 layout: home
 ---
 
+![By Michael Sander [GFDL (http://www.gnu.org/copyleft/fdl.html) or CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)], from Wikimedia Commons](https://upload.wikimedia.org/wikipedia/commons/e/ee/Kiloware.JPG)
+
 Fun with the change-making problem.
 
 ## Background
