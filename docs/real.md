@@ -1,4 +1,5 @@
 ---
+layout: page
 title: Real-life currencies
 ---
 
