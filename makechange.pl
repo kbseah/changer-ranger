@@ -24,6 +24,10 @@ change, the average number of coins needed, and the best combination possible.
 
 =cut
 
+use FindBin;
+use lib $FindBin::RealBin;
+use Makechange;
+
 use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper;
@@ -57,7 +61,7 @@ GetOptions ("curr|c=s" => \$curr,
             "bestweight" => \$byweight,
             "report-currencies" => \&report_currencies,
             "help|h" => sub {pod2usage(-verbose=>1)},
-            "man|h" => sub {pod2usage(-verbose=>2)},
+            "man|m" => sub {pod2usage(-verbose=>2)},
             ) or pod2usage(-verbose=>1);
 
 =head1 ARGUMENTS
@@ -143,6 +147,7 @@ unless ($verbose == 1) {
     # Header for table if verbose option not chosen
     my @outheader = qw(Amt Comb Avg Bestcount_count Bestcount_number);
     push @outheader, qw(Bestcount_wt Bestwt Bestwt_count Bestwt_number) if defined $byweight;
+    push @outheader, 'Greedy_count';
     say join "\t", @outheader;
 }
 
@@ -160,6 +165,8 @@ for (my $amt=$max; $amt >= $min; $amt-=1) {
     #my $bestchange_size = scalar @$bestchange_aref[0];
     my ($bestweight, $bestweight_coins_aref);
     my ($bestcount_wt, $bestcount_wts_aref);
+    my $greedy_aref = makechange_greedy($amt, \@denom_arr);
+    my $greedy_count = scalar @$greedy_aref;
     if (defined $byweight) {
         # Find the combination with lowest weight
         ($bestweight, $bestweight_coins_aref) = weigh_coins ($changecombinations_aref, $denom_weights{$curr});
@@ -183,6 +190,8 @@ for (my $amt=$max; $amt >= $min; $amt-=1) {
                 say "\t". join (" ", @$aref);
             }
         }
+        say "The greedy solution uses $greedy_count coins and is: ";
+        say "\t".join (" ", @$greedy_aref);
     } else {
         my @outarr = ($amt,                          # Input amount
                       $ways,                         # Number of ways to make change
@@ -202,6 +211,7 @@ for (my $amt=$max; $amt >= $min; $amt-=1) {
                            scalar (@$bestweight_coins_aref),   # How many combinations with the same weight
                            );
         }
+        push @outarr, $greedy_count;
         say join "\t", @outarr;
     }
 }
@@ -231,29 +241,6 @@ sub weigh_coins {
     #return \%hash;
 }
 
-sub shortestarrays {
-    my $AoAref = shift @_;
-    my $lowest;
-    my @winners;
-    foreach my $aref (@$AoAref) {
-        if (!defined $lowest) {
-            # initialize
-            $lowest = scalar @$aref;
-            @winners = ($aref);
-        } else {
-            if (scalar @$aref < $lowest) {
-                # If find a new lower value, reset results array
-                $lowest = scalar @$aref;
-                @winners = ($aref);
-            } elsif (scalar @$aref == $lowest) {
-                # If there is a tie, add to list
-                push @winners, $aref;
-            }
-        }
-    }
-    return ($lowest, \@winners);
-}
-
 sub sum_array {
     my $aref = shift @_;
     my $total = 0;
@@ -277,58 +264,6 @@ sub mean {
     }
 }
 
-sub makechange2 {
-    # Report the coins used to make change for given amount and denominations
-    # Wrapper for makechange2_internal
-    my ($amt, $denom_aref) = @_;
-    my @init = ();
-    my @AoA;
-    makechange2_internal($amt, $denom_aref, \@init, \@AoA);
-    return \@AoA;
-}
-
-sub makechange2_internal {
-    # Report all the ways to make change
-    my ($amt, $denom_aref, $ways_aref, $AoAref) = @_;
-    my @denom = @$denom_aref;
-    my @ways = @$ways_aref;
-    if ($amt < 0) {
-        # Do nothing if dead-end
-    } elsif (scalar @denom == 0) {
-        # Do nothing if dead end
-    } elsif ($amt == 0) {
-        push @$AoAref, \@ways;
-    } else {
-        my @denom2 = @denom;
-        my $firstval = shift @denom2;
-        my @ways2 = @ways;
-        push @ways2, $firstval;
-        makechange2_internal ($amt, \@denom2, \@ways, $AoAref);
-        makechange2_internal ($amt - $firstval, \@denom, \@ways2, $AoAref);
-    }
-}
-
-
-sub makechange {
-    # Just count how many ways to make change
-    my ($amt, $denom_aref) = @_;
-    #return $memo{$amt} if (defined $memo{$amt});
-    my $ways;
-    my @denom = @$denom_aref;
-    if ($amt < 0) {
-        $ways = 0;
-    } elsif ($amt == 0) {
-        $ways = 1;
-    } elsif (scalar @denom == 0) {
-        $ways = 0;
-    } else {
-        my @denom2 = @denom;
-        my $firstval = shift @denom2;
-        $ways = makechange ($amt, \@denom2)
-                + makechange ($amt - $firstval, \@denom);
-    }
-    return $ways;
-}
 
 sub report_currencies {
     foreach my $curr (sort keys %denom_hash) {
@@ -336,6 +271,8 @@ sub report_currencies {
     }
     exit;
 }
+
+
 
 ## DATA ########################################################################
 

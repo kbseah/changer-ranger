@@ -24,6 +24,10 @@ use warnings;
 use diagnostics;
 use 5.010;
 
+use FindBin;
+use lib $FindBin::RealBin;
+use Makechange;
+
 use Getopt::Long;
 use Pod::Usage;
 
@@ -96,93 +100,31 @@ if (!defined $min || ! defined $max) {
 }
 
 if ($verbose == 0) {
-    say join "\t", qw(Amount Bestcount Num_solutions);
+    say join "\t", qw(Amount Bestcount Num_solutions Greedy_count);
 }
 
 for (my $amt = $min; $amt <= $max; $amt ++ ) {
     say "Optimal change combination(s) for $amt is:" if ($verbose == 1);
     my $AoAref = makechange3($amt,\@denom);
+    my $greedy_aref = makechange_greedy($amt, \@denom);
     if (defined $verbose && $verbose == 1) {
+        say "Optimal solutions:";
         foreach my $aref (@$AoAref) {
             say join " ", @$aref;
         }
+        say "Greedy solution:";
+        say join " ", @$greedy_aref;
     } else {
         my $number_solutions = scalar @$AoAref;
         my $optimal_change = scalar @{$AoAref->[0]};
-        say join "\t", ($amt, $optimal_change, $number_solutions);
+        my $greedy_solution = scalar @$greedy_aref;
+        say join "\t", ($amt,
+                        $optimal_change,
+                        $number_solutions,
+                        $greedy_solution
+                        );
     }
 }
 
 
 ## SUBS ########################################################################
-
-sub shortestarrays {
-    my $AoAref = shift @_;
-    my $lowest;
-    my @winners;
-    foreach my $aref (@$AoAref) {
-        if (!defined $lowest) {
-            # initialize
-            $lowest = scalar @$aref;
-            @winners = ($aref);
-        } else {
-            if (scalar @$aref < $lowest) {
-                # If find a new lower value, reset results array
-                $lowest = scalar @$aref;
-                @winners = ($aref);
-            } elsif (scalar @$aref == $lowest) {
-                # If there is a tie, add to list
-                push @winners, $aref;
-            }
-        }
-    }
-    return ($lowest, \@winners);
-}
-
-sub makechange3 {
-    # Report the optimal change results
-    # Wrapper for makechange3_internal
-    # Difference from makechange2 is the variable $lowest; as the recursive
-    # function searches through the possible combinations, it stops searching
-    # when a given path is longer than the best found thus far, thus avoiding
-    # spending a lot of time on change combinations that are already clearly
-    # suboptimal
-    my ($amt, $denom_aref) = @_;
-    my @init = ();
-    my @AoA;
-    my $lowest;
-    makechange3_internal($amt, $denom_aref, \@init, \@AoA, \$lowest);
-    my ($fewest, $bestcount_aref) = shortestarrays (\@AoA);
-    return $bestcount_aref; # Return array containing only the best solutions
-}
-
-sub makechange3_internal {
-    # Find the optimal change by branch-and-bound
-    my ($amt,           # Amount of money to change
-        $denom_aref,    # Ref to array of denominations (array should be sorted smallest to largest)
-        $ways_aref,     # Ref to 'accumulator' array saving the values for current search
-        $AoAref,        # Ref to array of array refs, collecting solutions (external)
-        $lowest_sref    # Ref to string keeping tabs on the lowest count found so far (external)
-        ) = @_;
-    my @denom = @$denom_aref;
-    my @ways = @$ways_aref;
-    if ($amt < 0) {
-        # Do nothing if dead-end
-    } elsif (scalar @denom == 0) {
-        # Do nothing if dead end
-    } elsif (defined $$lowest_sref && scalar @ways > $$lowest_sref) {
-        # Do nothing if exceeding upper bound
-    } elsif ($amt == 0) {
-        if (! defined $$lowest_sref || scalar @ways < $$lowest_sref) {
-            $$lowest_sref = scalar @ways; # Update upper bound
-        }
-        push @$AoAref, \@ways;
-    } else {
-        my @denom2 = @denom;
-        my $firstval = shift @denom2;
-        my @ways2 = @ways;
-        push @ways2, $firstval;
-        makechange3_internal ($amt, \@denom2, \@ways, $AoAref, $lowest_sref);
-        makechange3_internal ($amt - $firstval, \@denom, \@ways2, $AoAref, $lowest_sref);
-    }
-}
