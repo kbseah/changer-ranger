@@ -50,6 +50,7 @@ my @outheader;
 my %denom_hash;
 my %denom_weights;
 foreach my $line (<DATA>){
+    chomp $line;
     my ($curr,$val,$wt) = split /,/, $line;
     push @{$denom_hash{$curr}}, $val;
     $denom_weights{$curr}{$val} = $wt;
@@ -303,8 +304,11 @@ sub mean {
 
 
 sub report_currencies {
-    foreach my $curr (sort keys %denom_hash) {
-        say STDERR join "\t", ($curr, join (",", @{$denom_hash{$curr}}));
+    foreach my $curr (sort keys %denom_weights) {
+        foreach my $val (sort keys %{$denom_weights{$curr}}) {
+            say STDERR join "\t", ($curr, $val, $denom_weights{$curr}{$val});
+        }
+
     }
     exit;
 }
@@ -346,7 +350,7 @@ USD,25,5.67
 USD,10,2.268
 USD,5,5
 USD,1,2.5
-EUR,200,0.5,
+EUR,200,8.5,
 EUR,100,7.5,
 EUR,50,7.8
 EUR,20,5.74
