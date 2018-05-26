@@ -74,10 +74,11 @@ sub makechange3 {
     #
     # Denom should be sorted from lowest to highest
     my ($amt, $denom_aref) = @_;
+    my @denom = sort {$a <=> $b} @$denom_aref;
     my @init = ();
     my @AoA;
     my $lowest;
-    makechange3_internal($amt, $denom_aref, \@init, \@AoA, \$lowest);
+    makechange3_internal($amt, \@denom, \@init, \@AoA, \$lowest);
     my ($fewest, $bestcount_aref) = shortestarrays (\@AoA);
     return $bestcount_aref; # Return array containing only the best solutions
 }

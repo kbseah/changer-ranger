@@ -33,12 +33,17 @@ use Pod::Usage;
 use Data::Dumper;
 
 my $curr= 'USD';
+# Options
 my $verbose = 0; # If defined, verbosely explain what the numbers reported mean
+my $exhaustive = 0;
+my $byweight = 0;
+# Inputs
 my $amount = 100;
 my ($max, $min) = (undef, undef);
 my $denom_str = undef;
 my @denom_arr;
-my $byweight;
+my %results;
+my @outheader;
 
 # Predefined denominations
 # Read in data from DATA block
@@ -54,11 +59,12 @@ pod2usage("No arguments given") if !@ARGV;
 
 GetOptions ("curr|c=s" => \$curr,
             "denom|d=s" => \$denom_str,
-            "amount|a=i" => \$amount,
+            "amount|a=f" => \$amount,
             "max=i" => \$max,
             "min=i" => \$min,
             "verbose!" => \$verbose,
-            "bestweight" => \$byweight,
+            "bestweight!" => \$byweight,
+            "exhaustive!" => \$exhaustive,
             "report-currencies" => \&report_currencies,
             "help|h" => sub {pod2usage(-verbose=>1)},
             "man|m" => sub {pod2usage(-verbose=>2)},
@@ -112,6 +118,13 @@ of coins as a comparison.
 
 Default: No.
 
+=item --exhaustive
+
+Exhaustively search all the possible combinations. (Otherwise report only the
+optimal ones.) May be necessary if using option I<--bestweight>
+
+Default: No
+
 =item --report-currencies
 
 Report a table of the currencies available in the table.
@@ -137,7 +150,7 @@ if (!defined $denom_hash{$curr}) {
 if (defined $denom_str) {
     @denom_arr = split ",", $denom_str;
     say STDERR "Using custom denomination with values: ".join (" ", @denom_arr);
-    $byweight = undef;
+    $byweight = 0;
 } else {
     @denom_arr = @{$denom_hash{$curr}};
     say STDERR "Using denominations from currency $curr with values: ".join(" ", @denom_arr);
@@ -145,8 +158,10 @@ if (defined $denom_str) {
 
 unless ($verbose == 1) {
     # Header for table if verbose option not chosen
-    my @outheader = qw(Amt Comb Avg Bestcount_count Bestcount_number);
-    push @outheader, qw(Bestcount_wt Bestwt Bestwt_count Bestwt_number) if defined $byweight;
+    push @outheader, 'Amt';
+    push @outheader, qw(Comb Avg) if $exhaustive == 1;
+    push @outheader, qw(Bestcount_count Bestcount_number);
+    push @outheader, qw(Bestcount_wt Bestwt Bestwt_count Bestwt_number) if $byweight == 1;
     push @outheader, 'Greedy_count';
     say join "\t", @outheader;
 }
@@ -157,66 +172,88 @@ if (!defined $max || !defined $min) {
 }
 
 for (my $amt=$max; $amt >= $min; $amt-=1) {
-    my $changecombinations_aref = makechange2($amt, \@denom_arr);
-    my $ways = scalar @$changecombinations_aref;
-    my @numbers = map { scalar @$_ } @$changecombinations_aref;
-    my $mean_numbers = mean(\@numbers);
-    my ($bestchange_size, $bestchange_aref) = shortestarrays($changecombinations_aref);
-    #my $bestchange_size = scalar @$bestchange_aref[0];
-    my ($bestweight, $bestweight_coins_aref);
-    my ($bestcount_wt, $bestcount_wts_aref);
-    my $greedy_aref = makechange_greedy($amt, \@denom_arr);
-    my $greedy_count = scalar @$greedy_aref;
-    if (defined $byweight) {
-        # Find the combination with lowest weight
-        ($bestweight, $bestweight_coins_aref) = weigh_coins ($changecombinations_aref, $denom_weights{$curr});
-        # Also get the weight of combination with lowest count
-        ($bestcount_wt, $bestcount_wts_aref) = weigh_coins ($bestchange_aref, $denom_weights{$curr});
-    }
-    if ($verbose == 1) {
-        say "For amount $amt:";
-        say "There are $ways ways to make change, using on average ".sprintf("%.1f",$mean_numbers)." coins";
-        say "The best combination(s) uses $bestchange_size coins and is: ";
-        foreach my $aref (@$bestchange_aref) {
-            say "\t".join(" ", @$aref);
-        }
-        if (defined $byweight) {
-            say "The lightest combination thereof has weight $bestcount_wt";
-            foreach my $aref (@$bestcount_wts_aref) {
-                say "\t". join (" ", @$aref);
-            }
-            say "The lightest combination(s) has weight $bestweight and is: ";
-            foreach my $aref (@$bestweight_coins_aref) {
-                say "\t". join (" ", @$aref);
-            }
-        }
-        say "The greedy solution uses $greedy_count coins and is: ";
-        say "\t".join (" ", @$greedy_aref);
+    my ($changecombinations_aref, $ways);
+    $results{'Amt'} = $amt;
+    if ($exhaustive == 1) {
+        # Exhaustive search to find all solutions
+        $changecombinations_aref = makechange2($amt, \@denom_arr);
+        $results{'Comb'} = scalar @$changecombinations_aref;
+        my @numbers = map { scalar @$_ } @$changecombinations_aref;
+        $results{'Avg'} = mean(\@numbers);
+        ($results{'Bestcount_count'}, $results{'Bestcount_array'}) = shortestarrays($changecombinations_aref);
+        $results{'Bestcount_number'} = scalar @{$results{'Bestcount_array'}};
     } else {
-        my @outarr = ($amt,                          # Input amount
-                      $ways,                         # Number of ways to make change
-                      sprintf("%.1f",$mean_numbers), # Average number of coins
-                      $bestchange_size,              # Smallest number of coins
-                      scalar (@$bestchange_aref),    # How many combinations with this number
-                      );
-        if (defined $byweight) {
-            # If we also find the lightest combination of coins, there may
-            # be more than one combination using different coins, so we find
-            # what is the fewest.
-            my @bestweight_coins_counts = map { scalar @$_ } @$bestweight_coins_aref;
-            my @bestweight_coins_counts_sorted = sort { $a <=> $b } @bestweight_coins_counts;
-            push @outarr, ($bestcount_wt,                      # Weight of the fewest-count combination
-                           $bestweight,                        # Weight of lightest possible combination
-                           $bestweight_coins_counts_sorted[0], # Fewest number of possible coins with this weight.
-                           scalar (@$bestweight_coins_aref),   # How many combinations with the same weight
-                           );
-        }
-        push @outarr, $greedy_count;
-        say join "\t", @outarr;
+        # Branch and bound to find best count optimal solution(s) only
+        $changecombinations_aref = makechange3($amt, \@denom_arr);
+        $results{'Bestcount_number'} = scalar @$changecombinations_aref;
+        $results{'Bestcount_count'} = scalar @{$changecombinations_aref->[0]};
+        $results{'Bestcount_array'} = $changecombinations_aref;
     }
+    # Find the greedy solution
+    my $greedy_aref = makechange_greedy($amt, \@denom_arr);
+    $results{'Greedy_count'} = scalar @$greedy_aref;
+    $results{'Greedy_array'} = $greedy_aref;
+
+    if ($byweight == 1) {
+        # Find the combination with lowest weight
+        ($results{'Bestwt'}, $results{'Bestwt_array'}) = weigh_coins ($changecombinations_aref,
+                                                                      $denom_weights{$curr});
+        # If we also find the lightest combination of coins, there may
+        # be more than one combination using different coins, so we find
+        # what is the fewest.
+        my @bestweight_coins_counts = map { scalar @$_ } @{$results{'Bestwt_array'}};
+        my @bestweight_coins_counts_sorted = sort { $a <=> $b } @bestweight_coins_counts;
+        $results{'Bestwt_count'} = $bestweight_coins_counts_sorted[0];      # Fewest number of possible coins with this weight.
+        $results{'Bestwt_number'} = scalar (@{$results{'Bestwt_array'}});   # How many combinations with the same weight
+
+        # Also get the weight of combination with lowest count
+        ($results{'Bestcount_wt'}, $results{'Bestcount_wt_array'}) = weigh_coins ($results{'Bestcount_array'},
+                                                                                  $denom_weights{$curr});
+    }
+
+    # Reporting
+    if ($verbose == 1) {
+        report_verbose();
+    } else {
+        report_succinct();
+    }
+
 }
 
 ## SUBS ########################################################################
+
+sub report_succinct {
+    my @outarr;
+    foreach my $head (@outheader) {
+        if (defined $results{$head}) {
+            push @outarr, $results{$head};
+        } else {
+            push @outarr, 'NA';
+        }
+    }
+    say join "\t", @outarr;
+}
+
+sub report_verbose {
+    say "For amount $results{'Amt'}:";
+    say "There are $results{'Comb'} ways to make change, using an average of ".sprintf("%.1f",$results{'Avg'})." coins" if ($exhaustive == 1);
+    say "The best combination(s) uses $results{'Bestcount_count'} coins and is/are:";
+    foreach my $aref (@{$results{'Bestcount_array'}}) {
+        say "\t".join(" ", sort {$b <=> $a} @$aref);
+    }
+    if ($byweight == 1) {
+        say "The lightest combination thereof has weight $results{'Bestcount_wt'} g and is/are:";
+        foreach my $aref (@{$results{'Bestcount_wt_array'}}) {
+            say "\t". join (" ", sort {$b <=> $a} @$aref);
+        }
+        say "The lightest combination(s) overall has weight $results{'Bestwt'} g and is/are:";
+        foreach my $aref (@{$results{'Bestwt_array'}}) {
+            say "\t". join (" ", sort {$b <=> $a} @$aref);
+        }
+    }
+    say "The greedy solution uses $results{'Greedy_count'} coins and is:";
+    say "\t". join(" ", sort {$b <=> $a} @{$results{'Greedy_array'}});
+}
 
 sub weigh_coins {
     my ($aref,
