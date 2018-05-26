@@ -3,11 +3,9 @@ layout: page
 title: Real-life currencies
 ---
 
-# Real-life currencies
-
 How well do real-life currencies perform in making change?
 
-## The currencies
+## The currencies and their denominations
 
 For this analysis, I have chosen four well-known currencies. Here they are with their sub-base-unit coins (e.g. for USD, everything under $1).
 
@@ -24,7 +22,7 @@ Both EUR and GBP use the same denominations, which is a series (1, 2, 5) that re
 
 ## Minimizing number of coins
 
-![Number of coins needed to change amounts from 1 to 99 in four currencies, optimizing for fewest coins](currency_comparison_changestats_optimal_counts)
+![Number of coins needed to change amounts from 1 to 99 in four currencies, optimizing for fewest coins](currency_comparison_changestats_optimal_counts.png)
 
 *Figure 1. Number of coins needed to change amounts from 1 to 99 in four currencies, optimizing for fewest coins*
 
