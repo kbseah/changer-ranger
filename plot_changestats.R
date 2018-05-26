@@ -21,3 +21,7 @@ dev.off()
 png("currency_comparison_changestats_weights.png",height=300,width=1200)
 ggplot(changestats,aes(x=Amt)) + geom_line(aes(y=Bestwt, color="lowest weight")) + geom_line(aes(y=Bestcount_wt, color="fewest coin weight")) + facet_wrap(~Curr,nrow=1) + labs(x='Amount to change (¢)',y='Weight (g)')
 dev.off()
+
+png("currency_comparison_changestats_greedy.png",height=300,width=1200)
+ggplot(changestats,aes(x=Amt)) + geom_line(aes(y=Greedy_count, color="greedy count"))  + geom_line(aes(y=Bestcount_count, color="fewest coins")) + facet_wrap(~Curr,nrow=1) + labs(x='Amount to change (¢)',y='Number of coins')
+dev.off()
