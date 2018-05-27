@@ -4,6 +4,8 @@ layout: home
 
 ![By Michael Sander [GFDL (http://www.gnu.org/copyleft/fdl.html) or CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)], from Wikimedia Commons](https://upload.wikimedia.org/wikipedia/commons/e/ee/Kiloware.JPG)
 
+*Photo source: by Michael Sander, CC BY-SA 4.0, via [Wikimedia Commons](https://upload.wikimedia.org/wikipedia/commons/e/ee/Kiloware.JPG)*
+
 Fun with the change-making problem.
 
 ## Background
@@ -21,7 +23,7 @@ These problems, and the methods for finding the answer, are standard examples in
 
 ### The optimal-denomination problem
 
-The change-making problem assumes that you have coins in a given denomination, e.g. 25, 10, 5, 1 for the US dollar. What if you had a free hand in designing your own money? In the **optimal-denomination problem**, we want to find the coinage that minimizes the average change that one has to make. Of course, it would be impractical to have a coin for every number from 1 to 99, so we constrain the problem by specifying that one is limited to, say, 4 or 5 different types of coins (though the euro has 6 coins for values below 1 Eur).
+The change-making problem assumes that you have coins in a given denomination, e.g. 25, 10, 5, 1 for the US dollar. What if you had a free hand in designing your own money? In the **optimal-denomination problem**, we want to find the coinage that minimizes the average change that one has to make. Of course, it would be impractical to have a coin for every number from 1 to 99, so we constrain the problem by specifying that one is limited to, say, 4 or 5 different types of coins (though the euro has 6 coins for values below 1 EUR).
 
 This problem has been tackled by Shallit (2003), who assumed that the coin-user would encounter every amount from 1 to 99 cents with equal probability.
 
@@ -29,15 +31,26 @@ This problem has been tackled by Shallit (2003), who assumed that the coin-user 
 
 Here we explore some extensions to the above problems:
 
- * What is the optimal change in terms of total weight? Does it differ for the result that minimizes the number of coins?
- * What is the optimal denomination when we consider real-life prices? For example, prices that end in .99 and .50 are noticeably more common.
- * How do real-life currencies measure up in terms of their optimality?
+ * [Real-life currencies](real.html)
+  * What is the optimal change in terms of total weight? Does it differ for the result that minimizes the number of coins?
+  * How do real-life currencies measure up in terms of their optimality?
+ * [Real-life prices](prices.md)
+  * What is the optimal denomination when we consider real-life prices? For example, prices that end in .99 and .50 are noticeably more common.
+  * Is the optimal denomination for a cashier different than that for a customer?
 
-## How to generate change tables
+## How the results were generated
 
-The script `makechange.pl` computes the best combination of coins for a given amount of change (in cents). This can be either in terms of minimizing the total number of coins, or minimizing the total weight of the change. Data for a number of common currencies have been included with the script. Instructions for using the script are displayed with the help message: `perl makechange.pl --help`.
+[Algorithms](algorithms.html) for calculating the optimal change for a given amount and denomination have been implemented in the script `makechange.pl` available in the accompanying [GitHub repository](https://github.com/kbseah/changer-ranger). The script computes the best combination of coins for a given amount of change (in cents). This can be either in terms of minimizing the total number of coins, or minimizing the total weight of the change. The solution from the greedy algorithm is also supplied for comparison. Data for a number of common currencies have been included with the script. Instructions for using the script are displayed with the help message: `perl makechange.pl --help`.
 
 The script can run in verbose mode (explain in English what the results mean, and also display the combination of coins used) or in default tabular mode, where only the summary statistics are displayed. The best-change statistics can be computed for a single amount (option `--amount`), or for a range of values (options `--min` and `--max`). The latter were used to generate the tables in the folder `changestats`.
+
+## Further reading
+
+ * Abelson H and Sussman GJ, with Sussman J. 1996. [Section 1.2. Procedures and the processes they create.](http://www.mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-11.html#%_sec_1.2) In: Structure and interpretation of computer programs. 2nd ed. MIT Press.
+ * Dominus MJ. 2005. Chapter 1. Recursion and Callbacks. In: [Higher-order Perl](https://hop.perl.plover.com/book/). Elsevier.
+ * Shallit J. 2003. "What this country needs is an 18¢ piece" ([pdf](https://cs.uwaterloo.ca/~shallit/Papers/change2.pdf)). Mathematical Intelligencer 25 (2) : 20-23.
+ * Wright JW. 1975. ["The change-making problem"](https://dl.acm.org/citation.cfm?doid=321864.321874). Journal of the Association for Computing Machinery 22 (1) : 125-128.
+ * Wikipedia: [Change-making problem](https://en.wikipedia.org/wiki/Change-making_problem)
 
 ## Data sources
 
