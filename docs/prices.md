@@ -140,3 +140,7 @@ The solution landscape:
 This is the final answer: `1 9 30` is the best 3-coin denomination, given real-life prices! It is probably also easier for mental arithmetic than the `1 12 19` denomination assuming a uniform distribution of prices.
 
 As far as I am aware, no real-life currency uses this denomination. However, the pre-decimal British coinage comes close (`1 3 6 12 24 30 60`), as it is built on a base-12 system.
+
+*Below: Artist's rendering of the new rational denominations*
+
+![](optimal_coins.png)
