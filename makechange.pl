@@ -279,30 +279,6 @@ sub weigh_coins {
     #return \%hash;
 }
 
-sub sum_array {
-    my $aref = shift @_;
-    my $total = 0;
-    foreach my $val (@$aref) {
-        $total += $val;
-    }
-    return $total;
-}
-
-sub mean {
-    my $aref = shift @_;
-    my $length = scalar @$aref;
-    my $sum = 0;
-    foreach my $val (@$aref) {
-        $sum += $val;
-    }
-    if ($length > 0) {
-        return $sum / $length;
-    } else {
-        return undef;
-    }
-}
-
-
 sub report_currencies {
     foreach my $curr (sort keys %denom_weights) {
         foreach my $val (sort keys %{$denom_weights{$curr}}) {

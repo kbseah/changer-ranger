@@ -9,7 +9,9 @@ our @EXPORT = qw(makechange
                  makechange2
                  makechange3
                  makechange_greedy
-                 shortestarrays);
+                 shortestarrays
+                 sum_array
+                 mean);
 
 sub makechange {
     # Just count how many ways to make change
@@ -170,10 +172,33 @@ sub shortestarrays {
     return ($lowest, \@winners);
 }
 
+sub sum_array {
+    my $aref = shift @_;
+    my $total = 0;
+    foreach my $val (@$aref) {
+        $total += $val;
+    }
+    return $total;
+}
+
+sub mean {
+    my $aref = shift @_;
+    my $length = scalar @$aref;
+    my $sum = 0;
+    foreach my $val (@$aref) {
+        $sum += $val;
+    }
+    if ($length > 0) {
+        return $sum / $length;
+    } else {
+        return undef;
+    }
+}
+
 =head1 COPYRIGHT AND LICENSE
 
 Makechange.pm
-Copyright (C) 2018 Brandon Seah 
+Copyright (C) 2018 Brandon Seah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
