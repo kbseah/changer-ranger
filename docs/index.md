@@ -6,7 +6,10 @@ layout: home
 
 *Photo source: by Michael Sander, CC BY-SA 4.0, via [Wikimedia Commons](https://upload.wikimedia.org/wikipedia/commons/e/ee/Kiloware.JPG)*
 
-Fun with the change-making problem.
+ * The coins of the US dollar are not rationally designed
+ * The optimal denomination using three coins is: 1, 30, and 90 ¢
+
+How does one come to these conclusions? Read on ...
 
 ## Background
 
@@ -32,11 +35,11 @@ This problem has been tackled by Shallit (2003), who assumed that the coin-user 
 Here we explore some extensions to the above problems:
 
  * [Real-life currencies](real.html)
-  * What is the optimal change in terms of total weight? Does it differ for the result that minimizes the number of coins?
-  * How do real-life currencies measure up in terms of their optimality?
+    - What is the optimal change in terms of total weight? Does it differ for the result that minimizes the number of coins?
+    - How do real-life currencies measure up in terms of their optimality?
  * [Real-life prices](prices.md)
-  * What is the optimal denomination when we consider real-life prices? For example, prices that end in .99 and .50 are noticeably more common.
-  * Is the optimal denomination for a cashier different than that for a customer?
+    - What is the optimal denomination when we consider real-life prices? For example, prices that end in .99 and .50 are noticeably more common.
+    - Is the optimal denomination for a cashier different than that for a customer?
 
 ## How the results were generated
 
